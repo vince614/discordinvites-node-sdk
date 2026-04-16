@@ -1,0 +1,49 @@
+{
+  "name": "discordinvites",
+  "version": "1.0.0",
+  "description": "Official Node.js SDK for the DiscordInvites public API — zero dependencies, TypeScript, built-in rate-limit handling.",
+  "keywords": [
+    "discord",
+    "discordinvites",
+    "api",
+    "sdk",
+    "discord-bot",
+    "discord.js"
+  ],
+  "homepage": "https://discordinvites.net/developers",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vince614/discordinvites-node-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vince614/discordinvites-node-sdk/issues"
+  },
+  "license": "MIT",
+  "author": "DiscordInvites",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "typescript": "^5.9.0"
+  }
+}
