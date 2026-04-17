@@ -183,6 +183,70 @@ const di = new DiscordInvitesClient({
 });
 ```
 
+## Webhooks
+
+Subscribe to real-time events (`vote.created`, `server.bumped`, `review.created`) for servers you own. Create your webhook at <https://discordinvites.net/developers/webhooks>, copy the signing secret, then receive events over HTTPS.
+
+```ts
+import express from 'express';
+import { verifyWebhookSignature, type WebhookEvent } from 'discordinvites';
+
+const app = express();
+
+// Raw body is REQUIRED — JSON.parse loses byte-for-byte equality.
+app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.header('x-discordinvites-signature');
+
+  if (!verifyWebhookSignature(req.body, signature, process.env.DI_WEBHOOK_SECRET!)) {
+    return res.status(401).send('invalid signature');
+  }
+
+  const event = JSON.parse(req.body.toString('utf8')) as WebhookEvent;
+
+  switch (event.type) {
+    case 'vote.created':
+      console.log(`${event.data.voter.name} voted for ${event.data.server.name}`);
+      break;
+    case 'server.bumped':
+      console.log(`${event.data.server.name} bumped ${event.data.bumps} times`);
+      break;
+    case 'review.created':
+      console.log(`${event.data.review.rating}★ on ${event.data.server.name}`);
+      break;
+  }
+
+  res.status(200).send('ok'); // Reply 2xx within 10s or the delivery is retried.
+});
+
+app.listen(3030);
+```
+
+Runnable: [`examples/webhook-receiver.ts`](./examples/webhook-receiver.ts).
+
+### Event catalog
+
+| Type               | Fires when                           | `data` fields                                                       |
+|--------------------|--------------------------------------|---------------------------------------------------------------------|
+| `vote.created`     | A user votes for one of your servers | `server`, `voter`, `votes`, `totalVotes`                            |
+| `server.bumped`    | Your server is bumped                | `server`, `bumps`                                                   |
+| `review.created`   | A review is posted on your server    | `server`, `review { id, authorDiscordId, authorName, rating, comment }` |
+| `test.ping`        | Manual test from the dashboard       | `message`                                                           |
+
+### Headers
+
+| Header                       | Purpose                                                        |
+|------------------------------|----------------------------------------------------------------|
+| `X-DiscordInvites-Event`     | Event type string (mirrors `event.type`)                       |
+| `X-DiscordInvites-Delivery`  | ULID, stable across retries — use for **idempotency**          |
+| `X-DiscordInvites-Signature` | `sha256=<hmac>` of the raw body with your webhook secret       |
+
+### Retry & auto-disable
+
+- Retries on HTTP 5xx, 408, 429 or timeout (10s total). Exponential backoff, up to 10 attempts.
+- 4xx responses (except 408/429) are permanent — no retry, counts as one consecutive failure.
+- **20 consecutive failures** ⇒ the webhook is auto-disabled, with an email sent to the owner.
+- Re-enable from the dashboard once your endpoint is fixed.
+
 ## OpenAPI / Swagger UI
 
 Browse and try out every endpoint at **<https://discordinvites.net/api/doc>** (or `/api/doc.json` for the raw OpenAPI 3 schema).

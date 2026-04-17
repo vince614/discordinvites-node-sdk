@@ -30,3 +30,15 @@ export type {
   Me,
   RateLimitInfo,
 } from './types.js';
+
+export { verifyWebhookSignature } from './webhooks/verify.js';
+export type {
+  WebhookEvent,
+  WebhookEventType,
+  VoteCreatedEvent,
+  ServerBumpedEvent,
+  ReviewCreatedEvent,
+  TestPingEvent,
+  BaseEvent,
+  ServerSummary,
+} from './webhooks/events.js';
